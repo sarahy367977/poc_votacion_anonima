@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Votación anónima</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #FBF4EE; display: flex; justify-content: center; padding-top: 60px; }
+    main { background: white; padding: 30px; border-radius: 16px; width: 400px; }
+    h1 { text-align: center; font-size: 22px; }
+    button { display: flex; justify-content: space-between; width: 100%; padding: 16px; margin: 12px 0; font-size: 16px; border: 1px solid #EBC4AC; border-radius: 10px; background: white; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    p { text-align: center; color: #315C38; }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <h1>¿Qué prefieres hacer el fin de semana?</h1>
+
+    <button v-for="(opcion, i) in opciones" @click="votar(i)" :disabled="yaVote">
+      <span>{{ opcion }}</span>
+      <strong>{{ votos[i] }} votos</strong>
+    </button>
+
+    <p v-if="yaVote">¡Tu voto fue registrado!</p>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script>
+    const socket = io();
+
+    let identificador = localStorage.getItem("identificador");
+    if (!identificador) {
+      identificador = "anonimo-" + Math.random().toString(36).slice(2);
+      localStorage.setItem("identificador", identificador);
+    }
+
+    Vue.createApp({
+      data() {
+        return {
+          opciones: ["Ver películas", "Salir con amigos", "Hacer tarea"],
+          votos: [0, 0, 0],
+          yaVote: false
+        };
+      },
+      mounted() {
+        socket.emit("consultar-voto", identificador, (respuesta) => {
+          this.yaVote = respuesta.yaVoto;
+        });
+
+        socket.on("actualizar-votos", (totales) => {
+          this.votos = totales;
+        });
+      },
+      methods: {
+        votar(i) {
+          socket.emit("votar", { opcion: i, identificador: identificador }, (respuesta) => {
+            if (respuesta.correcto) {
+              this.yaVote = true;
+            }
+          });
+        }
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>
