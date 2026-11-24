@@ -1,0 +1,13 @@
+{
+  "name": "poc_votacion_anonima",
+  "version": "1.0.0",
+  "description": "POC votación anónima en tiempo real",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "socket.io": "^4.8.4"
+  }
+}
